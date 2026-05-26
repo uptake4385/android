@@ -4,9 +4,9 @@ import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import kotlin.random.Random
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 
 class CompressedEntityTest {
 

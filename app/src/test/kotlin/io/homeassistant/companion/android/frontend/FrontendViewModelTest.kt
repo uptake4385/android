@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.authentication.Authentication
@@ -64,13 +65,13 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -91,9 +92,11 @@ class FrontendViewModelTest {
     private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val autoPlayVideoFlow = MutableStateFlow(false)
+    private val screenOrientationFlow = MutableStateFlow(ScreenOrientation.SYSTEM)
     private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
         coEvery { this@mockk.zoomSettingsFlow() } returns this@FrontendViewModelTest.zoomSettingsFlow
         coEvery { this@mockk.autoPlayVideoFlow() } returns this@FrontendViewModelTest.autoPlayVideoFlow
+        coEvery { this@mockk.screenOrientationFlow() } returns this@FrontendViewModelTest.screenOrientationFlow
     }
 
     private val serverId = 1
@@ -1129,9 +1132,8 @@ class FrontendViewModelTest {
             triggerJsConfirm("Are you sure?", mockk(relaxed = true))
             advanceUntilIdle()
 
-            val dialog = viewModel.pendingDialog.value
-            assertInstanceOf(FrontendDialog.Confirm::class.java, dialog)
-            assertEquals("Are you sure?", (dialog as FrontendDialog.Confirm).message)
+            val dialog = assertInstanceOf(FrontendDialog.Confirm::class.java, viewModel.pendingDialog.value)
+            assertEquals("Are you sure?", dialog.message)
         }
 
         @Test
@@ -1227,7 +1229,7 @@ class FrontendViewModelTest {
             assertTrue(handled)
             val pending = viewModel.pendingFileChooser.value
             assertNotNull(pending)
-            assertTrue(pending!!.fileChooserParams === fileChooserParams)
+            assertTrue(pending.fileChooserParams === fileChooserParams)
         }
 
         @Test
@@ -1241,7 +1243,7 @@ class FrontendViewModelTest {
 
             val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
 
-            val handled = client.onShowFileChooser(
+            client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 mockk(relaxed = true),
@@ -1252,7 +1254,7 @@ class FrontendViewModelTest {
             assertNotNull(pending)
 
             val uris = arrayOf(mockk<Uri>())
-            pending!!.onResult(uris)
+            pending.onResult(uris)
             advanceUntilIdle()
 
             verify { filePathCallback.onReceiveValue(uris) }
@@ -1270,14 +1272,15 @@ class FrontendViewModelTest {
 
             val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
 
-            val handled = client.onShowFileChooser(
+            client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 mockk(relaxed = true),
             )
             advanceUntilIdle()
-
-            viewModel.pendingFileChooser.value!!.onResult(null)
+            val request = viewModel.pendingFileChooser.value
+            assertNotNull(request)
+            request.onResult(null)
             advanceUntilIdle()
 
             verify { filePathCallback.onReceiveValue(null) }
@@ -1734,6 +1737,33 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertEquals(value, viewModel.autoPlayVideoEnabled.value)
+        }
+    }
+
+    @Nested
+    inner class ScreenOrientationSetting {
+
+        @Test
+        fun `Given pref flow emits new value when collected then exposed StateFlow reflects it`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(ScreenOrientation.SYSTEM, viewModel.screenOrientation.value)
+
+            screenOrientationFlow.value = ScreenOrientation.LANDSCAPE
+            advanceUntilIdle()
+
+            assertEquals(ScreenOrientation.LANDSCAPE, viewModel.screenOrientation.value)
+        }
+
+        @Test
+        fun `Given pref flow seeded with portrait when ViewModel constructed then exposed StateFlow has portrait`() = runTest {
+            screenOrientationFlow.value = ScreenOrientation.PORTRAIT
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(ScreenOrientation.PORTRAIT, viewModel.screenOrientation.value)
         }
     }
 }

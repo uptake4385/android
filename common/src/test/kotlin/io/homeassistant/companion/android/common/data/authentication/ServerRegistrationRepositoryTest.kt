@@ -11,10 +11,10 @@ import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.NullSource
 import org.junit.jupiter.params.provider.ValueSource
@@ -51,7 +51,7 @@ class ServerRegistrationRepositoryTest {
         )
 
         assertNotNull(result)
-        assertEquals(url, result!!.externalUrl)
+        assertEquals(url, result.externalUrl)
         assertEquals(false, result.allowInsecureConnection)
         assertEquals("access_token_123", result.session.accessToken)
         assertEquals("refresh_token_456", result.session.refreshToken)
@@ -136,7 +136,7 @@ class ServerRegistrationRepositoryTest {
         )
 
         assertNotNull(result)
-        assertEquals(allowInsecure, result!!.allowInsecureConnection)
+        assertEquals(allowInsecure, result.allowInsecureConnection)
     }
 
     @Test
@@ -158,7 +158,7 @@ class ServerRegistrationRepositoryTest {
         val afterCallTime = System.currentTimeMillis() / 1000
 
         assertNotNull(result)
-        val tokenExpiration = result!!.session.tokenExpiration!!
+        val tokenExpiration = result.session.tokenExpiration!!
         assertTrue(tokenExpiration >= beforeCallTime + expiresInSeconds)
         assertTrue(tokenExpiration <= afterCallTime + expiresInSeconds)
     }
