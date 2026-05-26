@@ -239,19 +239,10 @@ internal fun FrontendScreenContent(
         autoPlayVideoEnabled = autoPlayVideoEnabled,
         improvScanRequested = improvScanRequested,
         processImprovScanRequests = processImprovScanRequests,
+        screenOrientation = screenOrientation,
     )
 
     FrontendScreenHandlers(pendingPermissionRequest = pendingPermissionRequest, pendingDialog = pendingDialog)
-
-    PendingDialogHandler(
-        pendingDialog = pendingDialog,
-    )
-
-    FileChooserEffect(
-        pendingRequest = pendingFileChooser,
-    )
-
-    ScreenOrientationEffect(orientation = screenOrientation)
 
     Box(modifier = modifier.fillMaxSize()) {
         // Always render WebView at base layer
@@ -320,6 +311,7 @@ private fun FrontendScreenEffects(
     autoPlayVideoEnabled: Boolean,
     improvScanRequested: Boolean,
     processImprovScanRequests: suspend () -> Unit,
+    screenOrientation: ScreenOrientation,
 ) {
     ImprovScanLifecycleEffect(
         scanRequested = improvScanRequested,
@@ -337,6 +329,8 @@ private fun FrontendScreenEffects(
     FileChooserEffect(
         pendingRequest = pendingFileChooser,
     )
+
+    ScreenOrientationEffect(orientation = screenOrientation)
 }
 
 /**
